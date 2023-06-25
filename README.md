@@ -2,7 +2,7 @@
 
 Generate 8-bit style icons like the initial GitHub icons. SVG and PNG support.
 
-![bit-icon-demo-image](https://github.com/shunsuke92/bit-icon/assets/95519286/1cc23f9c-3397-42fc-8ec3-d97b74d6b39b)
+![bit-icon-demo-image](https://github.com/shunsuke92/bit-icon/assets/95519286/3bc3f35e-a030-42df-9053-5f2ae5741e80)
 
 ## Demo
 
