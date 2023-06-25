@@ -10,10 +10,10 @@ npm install bit-icon
 
 ## Methods
 
-| Name    | Type            | Description                          | Example                                                                  |
-| ------- | --------------- | ------------------------------------ | ------------------------------------------------------------------------ |
-| toSvg() | string          | Output Base64-encoded SVG in DataURI | `data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcv ...` |
-| toPng() | Promise<string> | Output Base64-encoded PNG in DataURI | `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAAGkCAMAAABJkqEH ...` |
+| Name    | Type              | Description                          | Example                                        |
+| ------- | ----------------- | ------------------------------------ | ---------------------------------------------- |
+| toSvg() | string            | Output Base64-encoded SVG in DataURI | `data:image/svg+xml;base64,PHN2ZyB4bWxucz ...` |
+| toPng() | Promise\<string\> | Output Base64-encoded PNG in DataURI | `data:image/png;base64,iVBORw0KGgoAAAANSU ...` |
 
 ## Options
 
@@ -67,7 +67,7 @@ const options: Options = {
     type: 'reverse'
   };
 const bitIcon = new BitIcon(hash, options);
-const png = bitIcon.toPng();
+const png = await bitIcon.toPng();
 
 // If you want to download
 const link = document.createElement('a');
