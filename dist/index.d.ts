@@ -1,8 +1,8 @@
 export type Options = {
     size?: number;
     pixel?: number;
-    color?: string | number[];
-    background?: string | number[];
+    color?: string;
+    background?: string;
     hue?: number[];
     saturation?: number[];
     lightness?: number[];
@@ -23,3 +23,6 @@ export declare class BitIcon {
     toSvg(): string;
     toPng(): Promise<string>;
 }
+export declare const inputColorToHex: (color: string) => string;
+export declare const parseRgb: (rgb: string) => number[];
+export declare const parseHsl: (rgb: string) => number[];

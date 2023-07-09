@@ -1,8 +1,8 @@
 export type Options = {
   size?: number;
   pixel?: number;
-  color?: string | number[];
-  background?: string | number[];
+  color?: string;
+  background?: string;
   hue?: number[];
   saturation?: number[];
   lightness?: number[];
@@ -72,11 +72,7 @@ export class BitIcon {
 
     let color: string;
     if (o?.color !== undefined) {
-      if (Array.isArray(o.color)) {
-        color = hslToHex(o.color);
-      } else {
-        color = o.color;
-      }
+      color = inputColorToHex(o.color);
     } else {
       color = hashToHex(this.hash, this.hue, this.saturation, this.lightness);
     }
@@ -84,11 +80,7 @@ export class BitIcon {
 
     let background: string;
     if (o?.background !== undefined) {
-      if (Array.isArray(o.background)) {
-        background = hslToHex(o.background);
-      } else {
-        background = o.background;
-      }
+      background = inputColorToHex(o.background);
     } else {
       background = '#ffffff';
     }
@@ -96,19 +88,9 @@ export class BitIcon {
 
     const isInvalidSize = this.size < this.pixel * 5;
 
-    let isInvalidColor = false;
-    if (this.color !== undefined) {
-      isInvalidColor = Array.isArray(this.color)
-        ? !isValidHslColor(this.color)
-        : !isValidHexColor(this.color);
-    }
+    const isInvalidColor = !isValidHexColor(this.color);
 
-    let isInvalidBackground = false;
-    if (this.background !== undefined) {
-      isInvalidBackground = Array.isArray(this.background)
-        ? !isValidHslColor(this.background)
-        : !isValidHexColor(this.background);
-    }
+    const isInvalidBackground = !isValidHexColor(this.background);
 
     const isInvalidColorRange =
       this.hue[0] > this.hue[1] ||
@@ -251,6 +233,114 @@ export class BitIcon {
   }
 }
 
+export const inputColorToHex = (color: string): string => {
+  // Trim space
+  const trimColor = color.replace(/\s+/g, '');
+
+  // In case of Hex
+  if (isValidHexColor(trimColor)) {
+    return trimColor;
+  }
+
+  // In the case of Non-Hex
+  const format = trimColor.slice(0, 3).toLowerCase();
+  const data = trimColor.slice(3);
+  if (format === 'rgb') {
+    const rgb = parseRgb(data);
+    const hex = rgbToHex(rgb);
+    return hex;
+  } else if (format === 'hsl') {
+    const hsl = parseHsl(data);
+    const hex = hslToHex(hsl);
+    return hex;
+  } else if (format === 'hsb') {
+    const hsb = parseHsl(data);
+    const hex = hsbToHex(hsb);
+    return hex;
+  }
+
+  throw new Error('Invalid color format.');
+};
+
+export const parseRgb = (rgb: string): number[] => {
+  let parsedRgb: number[] = [];
+
+  if (rgb.slice(0, 1) !== '(' || rgb.slice(-1) !== ')') {
+    throw new Error('Invalid color format.');
+  }
+
+  const arrayRgb = rgb.slice(1, -1).split(',');
+
+  if (arrayRgb.length < 3) {
+    throw new Error('Invalid color format.');
+  }
+
+  for (let i = 0; i < 3; i += 1) {
+    if (isNaN(Number(arrayRgb[i])) || Number(arrayRgb[i]) < 0 || Number(arrayRgb[i]) > 255) {
+      throw new Error('Invalid color format.');
+    }
+    parsedRgb.push(Math.trunc(Number(arrayRgb[i])));
+  }
+
+  if (arrayRgb.length >= 4) {
+    if (arrayRgb[3].includes('%')) {
+      const str = arrayRgb[3].replace('%', '');
+      if (isNaN(Number(str)) || Number(str) < 0 || Number(str) > 100) {
+        throw new Error('Invalid color format.');
+      }
+      parsedRgb.push(Math.trunc(Number(str)));
+    } else {
+      if (isNaN(Number(arrayRgb[3])) || Number(arrayRgb[3]) < 0 || Number(arrayRgb[3]) > 1) {
+        throw new Error('Invalid color format.');
+      }
+      parsedRgb.push(Number(Math.trunc(Number(arrayRgb[3]) * 100)));
+    }
+  }
+  return parsedRgb;
+};
+
+export const parseHsl = (rgb: string): number[] => {
+  let parsedHsl: number[] = [];
+
+  if (rgb.slice(0, 1) !== '(' || rgb.slice(-1) !== ')') {
+    throw new Error('Invalid color format.');
+  }
+
+  const arrayRgb = rgb.slice(1, -1).split(',');
+
+  if (arrayRgb.length < 3) {
+    throw new Error('Invalid color format.');
+  }
+
+  if (isNaN(Number(arrayRgb[0])) || Number(arrayRgb[0]) < 0 || Number(arrayRgb[0]) > 360) {
+    throw new Error('Invalid color format.');
+  }
+  parsedHsl.push(Math.trunc(Number(arrayRgb[0])));
+
+  for (let i = 1; i < 3; i += 1) {
+    if (isNaN(Number(arrayRgb[i])) || Number(arrayRgb[i]) < 0 || Number(arrayRgb[i]) > 100) {
+      throw new Error('Invalid color format.');
+    }
+    parsedHsl.push(Math.trunc(Number(arrayRgb[i])));
+  }
+
+  if (arrayRgb.length >= 4) {
+    if (arrayRgb[3].includes('%')) {
+      const str = arrayRgb[3].replace('%', '');
+      if (isNaN(Number(str)) || Number(str) < 0 || Number(str) > 100) {
+        throw new Error('Invalid color format.');
+      }
+      parsedHsl.push(Math.trunc(Number(str)));
+    } else {
+      if (isNaN(Number(arrayRgb[3])) || Number(arrayRgb[3]) < 0 || Number(arrayRgb[3]) > 1) {
+        throw new Error('Invalid color format.');
+      }
+      parsedHsl.push(Number(Math.trunc(Number(arrayRgb[3]) * 100)));
+    }
+  }
+  return parsedHsl;
+};
+
 const hashToHex = (hash: string, h: number[], s: number[], l: number[]): string => {
   const [hue, saturation, lightness] = hashToHsl(hash);
   const mappingHsl = [
@@ -271,6 +361,13 @@ const hslToHex = (hsl: number[]): string => {
   return hex;
 };
 
+const hsbToHex = (hsb: number[]): string => {
+  const rgb = hsbToRgb(hsb);
+  const hex = rgbToHex(rgb);
+
+  return hex;
+};
+
 const hashToHsl = (hash: string): number[] => {
   const hue = Math.round(parseInt(hash.slice(-7, -4), 16) * (360 / 4095));
   const saturation = Math.round(parseInt(hash.slice(-4, -2), 16) * (100 / 255));
@@ -283,54 +380,110 @@ const hslToRgb = (hsl: number[]): number[] => {
   const hue = hsl[0];
   const saturation = hsl[1];
   const lightness = hsl[2];
+  const alpha = hsl[3];
   let max;
   let min;
   let red;
   let green;
   let blue;
 
-  if (lightness <= 49) {
-    max = Math.round(2.55 * (lightness + lightness * (saturation / 100)));
-    min = Math.round(2.55 * (lightness - lightness * (saturation / 100)));
+  if (lightness < 50) {
+    max = 2.55 * (lightness + lightness * (saturation / 100));
+    min = 2.55 * (lightness - lightness * (saturation / 100));
   } else {
-    max = Math.round(2.55 * (lightness + (100 - lightness) * (saturation / 100)));
-    min = Math.round(2.55 * (lightness - (100 - lightness) * (saturation / 100)));
+    max = 2.55 * (lightness + (100 - lightness) * (saturation / 100));
+    min = 2.55 * (lightness - (100 - lightness) * (saturation / 100));
   }
+
+  if (hue <= 60) {
+    red = Math.ceil(max);
+    green = Math.ceil((hue / 60) * (max - min) + min);
+    blue = Math.ceil(min);
+  } else if (hue <= 120) {
+    red = Math.ceil(((120 - hue) / 60) * (max - min) + min);
+    green = Math.ceil(max);
+    blue = Math.ceil(min);
+  } else if (hue <= 180) {
+    red = Math.ceil(min);
+    green = Math.ceil(max);
+    blue = Math.ceil(((hue - 120) / 60) * (max - min) + min);
+  } else if (hue <= 240) {
+    red = Math.ceil(min);
+    green = Math.ceil(((240 - hue) / 60) * (max - min) + min);
+    blue = Math.ceil(max);
+  } else if (hue <= 300) {
+    red = Math.ceil(((hue - 240) / 60) * (max - min) + min);
+    green = Math.ceil(min);
+    blue = Math.ceil(max);
+  } else {
+    red = Math.ceil(max);
+    green = Math.ceil(min);
+    blue = Math.ceil(((360 - hue) / 60) * (max - min) + min);
+  }
+
+  if (alpha !== undefined) {
+    return [red, green, blue, alpha];
+  } else {
+    return [red, green, blue];
+  }
+};
+
+const hsbToRgb = (hsb: number[]): number[] => {
+  const hue = hsb[0];
+  const saturation = mapping(hsb[1], 0, 100, 0, 255);
+  const brightness = mapping(hsb[2], 0, 100, 0, 255);
+  const alpha = hsb[3];
+  let red;
+  let green;
+  let blue;
+
+  const max = brightness;
+  const min = brightness - (saturation / 255) * brightness;
 
   if (hue <= 60) {
     red = max;
     green = Math.round((hue / 60) * (max - min) + min);
-    blue = min;
+    blue = Math.round(min);
   } else if (hue <= 120) {
     red = Math.round(((120 - hue) / 60) * (max - min) + min);
     green = max;
-    blue = min;
+    blue = Math.round(min);
   } else if (hue <= 180) {
-    red = min;
+    red = Math.round(min);
     green = max;
     blue = Math.round(((hue - 120) / 60) * (max - min) + min);
   } else if (hue <= 240) {
-    red = min;
+    red = Math.round(min);
     green = Math.round(((240 - hue) / 60) * (max - min) + min);
     blue = max;
   } else if (hue <= 300) {
     red = Math.round(((hue - 240) / 60) * (max - min) + min);
-    green = min;
+    green = Math.round(min);
     blue = max;
   } else {
     red = max;
-    green = min;
+    green = Math.round(min);
     blue = Math.round(((360 - hue) / 60) * (max - min) + min);
   }
 
-  return [red, green, blue];
+  if (alpha !== undefined) {
+    return [red, green, blue, alpha];
+  } else {
+    return [red, green, blue];
+  }
 };
 
 const rgbToHex = (rgb: number[]): string => {
-  const red = rgb[0].toString(16).padStart(2, '0');
-  const green = rgb[1].toString(16).padStart(2, '0');
-  const blue = rgb[2].toString(16).padStart(2, '0');
-  return `#${red}${green}${blue}`;
+  const red = rgb[0].toString(16).padStart(2, '0').toUpperCase();
+  const green = rgb[1].toString(16).padStart(2, '0').toUpperCase();
+  const blue = rgb[2].toString(16).padStart(2, '0').toUpperCase();
+
+  if (rgb.length >= 4) {
+    const alpha = mapping(rgb[3], 0, 100, 0, 255).toString(16).padStart(2, '0').toUpperCase();
+    return `#${red}${green}${blue}${alpha}`;
+  } else {
+    return `#${red}${green}${blue}`;
+  }
 };
 
 const mapping = (
@@ -360,18 +513,6 @@ const isValidHash = (value: string) => {
 const isValidHexColor = (color: string) => {
   return (
     /^#[0-9a-f]{3}$/i.test(color) || /^#[0-9a-f]{6}$/i.test(color) || /^#[0-9a-f]{8}$/i.test(color)
-  );
-};
-
-const isValidHslColor = (color: number[]) => {
-  return (
-    color.length === 3 &&
-    color[0] >= 0 &&
-    color[0] <= 360 &&
-    color[1] >= 0 &&
-    color[1] <= 100 &&
-    color[2] >= 0 &&
-    color[2] <= 100
   );
 };
 
